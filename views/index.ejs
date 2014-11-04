@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= title %></title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+	<script src="/javascripts/jquery-2.1.1.min.js"></script>
+    <script src="/javascripts/template.js"></script>
+    <script src="/javascripts/My97DatePicker/WdatePicker.js"></script>
+  </head>
+  <body>
+	<div class="wrapper">
+		<div class="interval-header">
+            <ul class="cl">
+                <li>
+                    <label>公众平台：</label>
+                    <select class="platform" name="platform">
+                        <% platform_lists.forEach(function(v) {  %>
+                            <option value="<%= v.user_name %>"><%= v.nick_name %></option>
+                        <% }) %>
+                    </select>
+                </li>
+                <li>
+                    <label>执行方式：</label>
+                    <select id="run-mode" class="run-mode" name="mode">
+                        <option selected="selected" value="0">重复执行</option>
+                        <option value="1">执行一次</option>
+                    </select>
+                </li>
+                <li>
+                    <label>时间设定：</label>
+                    <input name="time" class="datepicker time" id="datepicker" type="text" value="" />
+                </li>
+                <li>
+                    <input id="add-interval" type="button" value="添加定时任务" />
+                </li>
+            </ul>
+            <ul class="hide fsend-box" id="fsend-box">
+                <li>
+                    <label>群发文章：</label>
+                    <select class="fsend-select" name="fsend" disabled="disabled">
+                        <% fsend_lists.forEach(function(v) {  %>
+                            <option value="<%= v.app_id %>" title="<%= v.app_id %>"><%= v.title %></option>
+                        <% }) %>
+                    </select>
+                </li>
+            </ul>
+		</div>
+    </div>
+  <script>
+      jQuery(function(){
+
+          /** 加载日历控件 */
+
+          $(document).on('change', '.run-mode', function(){
+              var runMode = this.value;
+              $('.datepicker').attr('id', 'datepicker' + runMode).val('');
+              if ( runMode == 0 ){
+                  $('#fsend-box').hide();
+                  $('.fsend-select').attr('disabled', true);
+              } else if( runMode == 1)  {
+                  $('.fsend-select').attr('disabled', false);
+                  $('#fsend-box').show();
+              }
+          });
+
+          $(document).on('click', '.datepicker', function(){
+              var $this = $(this),
+                  $li = $this.closest('li'),
+                  html = $li.html();
+
+              var runMode = $('#run-mode').val();
+              $('.datepicker').attr('id', 'datepicker' + runMode).val('');
+              if( runMode == 0 ) {
+                  WdatePicker({
+                      el : 'datepicker' + runMode,
+                      skin:'twoer',
+                      dateFmt:'HH:mm:ss'
+                  });
+              } else if( runMode == 1) {
+                  WdatePicker({
+                      el : 'datepicker' + runMode,
+                      skin:'twoer',
+                      dateFmt:'yyyy-MM-dd HH点'
+                  });
+              }
+          });
+      });
+  </script>
+  </body>
+</html>
