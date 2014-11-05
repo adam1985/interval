@@ -9,7 +9,6 @@ module.exports = function( name, pwd, cb ){
                 rex = /token=(\d+)/;
             rex.test( redirect_url );
             var token = RegExp.$1;
-
             var query = {
                     t : "mass/send",
                     token : token,
@@ -33,7 +32,6 @@ module.exports = function( name, pwd, cb ){
                 "Referer" :	"http://mp.weixin.qq.com"
             }, {}, 'utf8');
         }
-
     });
 };
 

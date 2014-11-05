@@ -12,4 +12,6 @@ li{ list-style: none;}
 .interval-header input{ height: 30px; padding-left: 3px;}
 .interval-header select{ height: 30px; width: 100px;}
 .interval-header select.fsend-select{ width: 463px;}
+.add-interval{ cursor: pointer;}
+.interval-body{ margin-top: 20px;}
 

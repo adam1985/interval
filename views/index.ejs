@@ -10,46 +10,95 @@
   <body>
 	<div class="wrapper">
 		<div class="interval-header">
-            <ul class="cl">
-                <li>
-                    <label>公众平台：</label>
-                    <select class="platform" name="platform">
-                        <% platform_lists.forEach(function(v) {  %>
-                            <option value="<%= v.user_name %>"><%= v.nick_name %></option>
-                        <% }) %>
-                    </select>
-                </li>
-                <li>
-                    <label>执行方式：</label>
-                    <select id="run-mode" class="run-mode" name="mode">
-                        <option selected="selected" value="0">重复执行</option>
-                        <option value="1">执行一次</option>
-                    </select>
-                </li>
-                <li>
-                    <label>时间设定：</label>
-                    <input name="time" class="datepicker time" id="datepicker" type="text" value="" />
-                </li>
-                <li>
-                    <input id="add-interval" type="button" value="添加定时任务" />
-                </li>
-            </ul>
-            <ul class="hide fsend-box" id="fsend-box">
-                <li>
-                    <label>群发文章：</label>
-                    <select class="fsend-select" name="fsend" disabled="disabled">
-                        <% fsend_lists.forEach(function(v) {  %>
-                            <option value="<%= v.app_id %>" title="<%= v.app_id %>"><%= v.title %></option>
-                        <% }) %>
-                    </select>
-                </li>
-            </ul>
+            <form id="interval-form">
+                <ul class="cl">
+                    <li>
+                        <label>公众平台：</label>
+                        <select id="platform-select" class="platform-select" name="platform">
+                            <% platform_lists.forEach(function(v) {  %>
+                                <option value="<%= v.name %>"><%= v.nick_name %></option>
+                            <% }) %>
+                        </select>
+                    </li>
+                    <li>
+                        <label>执行方式：</label>
+                        <select id="run-mode" class="run-mode" name="mode">
+                            <option selected="selected" value="0">重复执行</option>
+                            <option value="1">执行一次</option>
+                        </select>
+                    </li>
+                    <li>
+                        <label>时间设定：</label>
+                        <input name="time" class="datepicker time" id="datepicker" type="text" value="" />
+                    </li>
+                    <li>
+                        <input id="add-interval" class="add-interval" type="button" value="添加定时任务" />
+                    </li>
+                </ul>
+                <ul class="hide fsend-box" id="fsend-box">
+                    <li>
+                        <label>群发文章：</label>
+                        <select id="fsend-select" class="fsend-select" name="app_id" disabled="disabled">
+                            <% fsend_lists.forEach(function(v) {  %>
+                                <option value="<%= v.app_id %>" title="<%= v.app_id %>"><%= v.title %></option>
+                            <% }) %>
+                        </select>
+                    </li>
+                </ul>
+            </form>
+            <div id="loading" class="hide">
+                正在操作中，请稍后...
+            </div>
 		</div>
+        <div class="interval-body">
+            <div class="interval-tip">定时任务列表</div>
+            <div class="interval-list">
+
+            </div>
+        </div>
     </div>
+  <script type="text/html" id="fsend-template">
+      {{ fsend_lists.forEach(function(v) {  }}
+            <option value="{{= v.app_id }}" title="{{= v.app_id }}">{{= v.title }}</option>
+      {{ }) }}
+  </script>
+
   <script>
       jQuery(function(){
 
-          /** 加载日历控件 */
+          var loading = $('#loading');
+
+          var getFsendList = function( platform_name, cb){
+                  loading.show();
+                  $.ajax({
+                      url : '/getSeqList',
+                      type : 'get',
+                      dataType : 'json',
+                      data : {
+                          platform_name : platform_name
+                      },
+                      success : function( res ){
+                          if( res.success ) {
+                              loading.hide();
+                              $('#fsend-select').html( template.render('fsend-template', {
+                                  fsend_lists : res.data
+                              }));
+                              cb && cb();
+                          }
+                      }
+                  });
+          };
+
+
+
+          $(document).on('change', '.platform-select', function(){
+              var platform_name = this.value;
+              var runMode = $('#run-mode').val();
+
+              if( runMode == 1) {
+                  getFsendList(platform_name);
+              }
+          });
 
           $(document).on('change', '.run-mode', function(){
               var runMode = this.value;
@@ -58,11 +107,14 @@
                   $('#fsend-box').hide();
                   $('.fsend-select').attr('disabled', true);
               } else if( runMode == 1)  {
-                  $('.fsend-select').attr('disabled', false);
-                  $('#fsend-box').show();
+                  getFsendList($('#platform-select').val(), function(){
+                      $('.fsend-select').attr('disabled', false);
+                      $('#fsend-box').show();
+                  });
               }
           });
 
+          /** 加载日历控件 */
           $(document).on('click', '.datepicker', function(){
               var $this = $(this),
                   $li = $this.closest('li'),
@@ -80,10 +132,34 @@
                   WdatePicker({
                       el : 'datepicker' + runMode,
                       skin:'twoer',
-                      dateFmt:'yyyy-MM-dd HH点'
+                      dateFmt:'yyyy-MM-dd HH:mm:ss'
                   });
               }
           });
+
+          /** 添加定时任务 */
+          $(document).on('click', '.add-interval', function(){
+              var serializeArray = $('#interval-form').serializeArray();
+              loading.show();
+              $.ajax({
+                  url : '/addTask',
+                  type : 'get',
+                  dataType : 'json',
+                  data : serializeArray,
+                  success : function( res ){
+                      if( res.success ) {
+                          loading.hide();
+
+                      }
+                  }
+              });
+          });
+
+          /** 删除定时任务 */
+          $(document).on('click', '.remove-interval', function(){
+
+          });
+
       });
   </script>
   </body>
