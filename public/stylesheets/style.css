@@ -12,6 +12,11 @@ li{ list-style: none;}
 .interval-header input{ height: 30px; padding-left: 3px;}
 .interval-header select{ height: 30px; width: 100px;}
 .interval-header select.fsend-select{ width: 463px;}
-.add-interval{ cursor: pointer;}
+.add-interval,.view-interval{ cursor: pointer;}
 .interval-body{ margin-top: 20px;}
+.loading{ width: 250px; height: 40px; border-radius: 5px; text-align: center; line-height: 40px; background: #eee; position: absolute; left: 50%; top: 50%; margin: -20px 0 0 -100px;}
 
+.interval-list table{width: 100%;}
+.interval-list table td,.interval-list table th{ text-align: left;}
+.interval-list table td { height: 35px;}
+.interval-list table input{ height: 25px;cursor: pointer;}

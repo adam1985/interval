@@ -9,7 +9,10 @@ var express = require('express')
   , path = require('path')
   , getSeqList = require('./routes/getSeqList')
   , addTask = require('./routes/addTask')
-  , removeTask = require('./routes/removeTask');
+  , removeTask = require('./routes/removeTask')
+  , viewInterval = require('./routes/viewInterval');
+
+global.taskObj = {};
 
 var app = express();
 
@@ -33,7 +36,7 @@ app.get('/', routes.index);
 app.get('/getSeqList', getSeqList);
 app.get('/removeTask', removeTask);
 app.get('/addTask', addTask);
-
+app.get('/viewInterval', viewInterval);
 
 http.createServer(app).listen(app.get('port'), function(){
   console.log("Express server listening on port " + app.get('port'));

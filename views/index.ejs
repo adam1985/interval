@@ -34,6 +34,9 @@
                     <li>
                         <input id="add-interval" class="add-interval" type="button" value="添加定时任务" />
                     </li>
+                    <li>
+                        <input id="view-interval" class="view-interval" type="button" value="查看定时任务" />
+                    </li>
                 </ul>
                 <ul class="hide fsend-box" id="fsend-box">
                     <li>
@@ -46,14 +49,47 @@
                     </li>
                 </ul>
             </form>
-            <div id="loading" class="hide">
+            <div id="loading" class="loading hide">
                 正在操作中，请稍后...
             </div>
 		</div>
         <div class="interval-body">
-            <div class="interval-tip">定时任务列表</div>
             <div class="interval-list">
-
+                   <table>
+                       <thead>
+                           <tr>
+                               <th>任务ID</th>
+                               <th>平台</th>
+                               <th>标题</th>
+                               <th>app_id</th>
+                               <th>执行方式</th>
+                               <th>启动时间</th>
+                               <th>上次执行时间</th>
+                               <th>执行结果</th>
+                               <th>执行次数</th>
+                               <td>操作</td>
+                           </tr>
+                       </thead>
+                       <tbody id="task-list">
+                            <% modeText = ["重复执行", "执行一次"]; %>
+                            <% taskList.forEach(function(v){ %>
+                                <tr>
+                                    <td><%= v.taskIndex %></td>
+                                    <td><%= v.platform %></td>
+                                    <td><%= v.title || '空' %></td>
+                                    <td><%= v.app_id || '空' %></td>
+                                    <td><%= modeText[+v.mode] %></td>
+                                    <td><%= v.time %></td>
+                                    <td><%= v.prevTime || '空'  %></td>
+                                    <td><%= v.successStatus || 0 %></td>
+                                    <td><%= v.excuteNum || 0 %></td>
+                                    <td>
+                                        <input data-task-index="<%= v.taskIndex %>" class="remove-interval" type="button" value="删除定时任务" />
+                                    </td>
+                                </tr>
+                            <% }) %>
+                       </tbody>
+                   </table>
             </div>
         </div>
     </div>
@@ -62,6 +98,26 @@
             <option value="{{= v.app_id }}" title="{{= v.app_id }}">{{= v.title }}</option>
       {{ }) }}
   </script>
+
+    <script type="text/html" id="tasklist-template">
+        {{ modeText = ["重复执行", "执行一次"]; }}
+        {{ taskList.forEach(function(v) {  }}
+            <tr>
+                <td>{{= v.taskIndex }}</td>
+                <td>{{= v.platform }}</td>
+                <td>{{= v.title || '空' }}</td>
+                <td>{{= v.app_id || '空' }}</td>
+                <td>{{= modeText[+v.mode] }}</td>
+                <td>{{= v.time }}</td>
+                <td>{{= v.prevTime || '空'  }}</td>
+                <td>{{= v.successStatus || 0 }}</td>
+                <td>{{= v.excuteNum || 0 }}</td>
+                <td>
+                    <input data-task-index="{{= v.taskIndex }}" class="remove-interval" type="button" value="删除定时任务" />
+                </td>
+            </tr>
+        {{ }) }}
+    </script>
 
   <script>
       jQuery(function(){
@@ -139,7 +195,15 @@
 
           /** 添加定时任务 */
           $(document).on('click', '.add-interval', function(){
-              var serializeArray = $('#interval-form').serializeArray();
+              var serializeArray = $('#interval-form').serializeArray(),
+                  fsendSelect = $('#fsend-select')[0];
+              if( !$(fsendSelect).attr('disabled') ) {
+                   var selectText = fsendSelect.options[fsendSelect.selectedIndex].text
+                  serializeArray.push({
+                      name : "title",
+                      value : selectText
+                  });
+              }
               loading.show();
               $.ajax({
                   url : '/addTask',
@@ -149,7 +213,9 @@
                   success : function( res ){
                       if( res.success ) {
                           loading.hide();
-
+                          $('#task-list').append( template.render('tasklist-template', {
+                              taskList : res.data
+                          }));
                       }
                   }
               });
@@ -157,6 +223,43 @@
 
           /** 删除定时任务 */
           $(document).on('click', '.remove-interval', function(){
+              var $this = $(this),
+                  taskindex = $this.attr('data-task-index'),
+                  tr = $this.closest('tr');
+              loading.show();
+              $.ajax({
+                  url : '/removeTask',
+                  type : 'get',
+                  dataType : 'json',
+                  data : {
+                      taskindex : taskindex
+                  },
+                  success : function( res ){
+                      if( res.success ) {
+                          loading.hide();
+                          tr.remove();
+                      }
+                  }
+              });
+
+          });
+
+
+          /** 查看定时任务 */
+          $(document).on('click', '.view-interval', function(){
+              var $this = $(this);
+              loading.show();
+              $.ajax({
+                  url : '/viewInterval',
+                  type : 'get',
+                  dataType : 'json',
+                  success : function( res ){
+                      if( res.success ) {
+                          loading.hide();
+                          alert( res.data );
+                      }
+                  }
+              });
 
           });
 

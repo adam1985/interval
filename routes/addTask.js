@@ -1,5 +1,7 @@
 var fs = require('fs'),
-    schedule = require("node-schedule");
+    schedule = require("node-schedule"),
+    tools = require('../module/tools'),
+    startMass = require("./startMass");
 
 var rootPath = process.cwd(),
     setInterTime = function(intervalTime, mode, cb){
@@ -52,9 +54,8 @@ var rootPath = process.cwd(),
         return timeout;
     },
 
-    tastListPath = rootPath + '/loger/tastlist.txt',
-    index = 0,
-    taskObj = {};
+    taskListPath = rootPath + '/loger/tasklist.txt',
+    publistPath = rootPath + '/loger/publist.txt';
 
 module.exports = function(req, res){
     var query = req.query,
@@ -62,8 +63,10 @@ module.exports = function(req, res){
         platform = query.platform,
         time = query.time,
         app_id = query.app_id,
+        title = query.title,
         task,
-        timeParams;
+        timeParams,
+        milli = new Date().getTime();
 
     if( mode == 0) {
         var rule = new schedule.RecurrenceRule();
@@ -72,8 +75,74 @@ module.exports = function(req, res){
         rule.minute = +timeParams[1];
         rule.second = +timeParams[2];
 
-        task = schedule.scheduleJob(rule, function(){
+        var writeLoger = function(data, taskIndex, app_id, platform_name, title){
+            console.log(data);
+            var publist = {};
+            if( fs.existsSync(publistPath) ) {
+                publist = JSON.parse(fs.readFileSync(publistPath).toString());
+            }
+            var noFount  = true, status = 0;
 
+            if( data.ret == 0) {
+                status = 1;
+            } else {
+                status = -1;
+            }
+
+            if( publist[platform_name] ) {
+                tools.each(publist[platform_name], function(i, v){
+                    if(v.app_id == app_id){
+                        noFount = false;
+                        publist[platform_name][i].status = status;
+                        return false;
+                    }
+                });
+
+                if( noFount ){
+                    publist[platform_name].push({
+                        "app_id": app_id,
+                        "status": status,
+                        "title": title
+                    });
+                }
+
+                fs.writeFileSync(publistPath, JSON.stringify(publist));
+            }
+
+
+            var taskList = [];
+            if( fs.existsSync(taskListPath) ) {
+                taskList = JSON.parse(fs.readFileSync(taskListPath).toString());
+            }
+
+            if( taskList.length ){
+                tools.each(taskList, function(i, v){
+
+                    if(v.taskIndex == taskIndex){
+                        taskList[i].prevTime = new Date().format("yyyy-MM-dd hh:mm:ss");
+                        taskList[i].successStatus = status;
+                        if( taskList[i].excuteNum != undefined ) {
+                            taskList[i].excuteNum++;
+                        } else {
+                            taskList[i].excuteNum = 1;
+                        }
+
+                    }
+                });
+
+                fs.writeFileSync(taskListPath, JSON.stringify(taskList));
+            }
+        };
+
+        task = schedule.scheduleJob(rule, function(){
+            startMass({
+                platform_name : platform,
+                taskIndex : milli,
+                cb : function( data, taskIndex, app_id, platform_name, title ){
+                    writeLoger( data, taskIndex, app_id, platform_name, title );
+
+                }
+            });
         });
 
     } else if( mode == 1){
@@ -81,36 +150,44 @@ module.exports = function(req, res){
         var date =  new Date(Date.apply(null, timeParams));
 
         task = schedule.scheduleJob(date, function(){
-
+            startMass({
+                platform_name : platform,
+                taskIndex : milli,
+                app_id : app_id,
+                title : title,
+                cb : function( data, taskIndex, app_id, platform_name, title ){
+                    writeLoger( data, taskIndex, app_id, platform_name, title );
+                }
+            });
         });
-
     }
 
-    taskObj[index] = task;
+    taskObj[milli] = task;
 
     var taskList = [];
-    if( fs.existsSync(tastListPath) ) {
-        var taskListStr = fs.readFileSync(tastListPath).toString();
+    if( fs.existsSync(taskListPath) ) {
+        var taskListStr = fs.readFileSync(taskListPath).toString();
             taskList = JSON.parse(taskListStr) ;
     }
 
-    taskList.push({
-        index : index,
+    var taskData = {
+        taskIndex : milli,
         mode : mode,
         platform : platform,
         time : time,
-        app_id : app_id || null
-    });
+        app_id : app_id || null,
+        title : title || null
+    };
 
-    index++;
+    taskList.push(taskData);
 
-    console.log(taskList);
 
-    fs.writeFileSync(tastListPath, JSON.stringify(taskList));
+    fs.writeFileSync(taskListPath, JSON.stringify(taskList));
 
     res.set({'Content-Type':'text/plain'});
     res.send(JSON.stringify({
-        success : true
+        success : true,
+        data : [taskData]
     }));
 
 };

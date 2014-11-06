@@ -3,7 +3,7 @@ var ng = require('nodegrass'),
     login = require("./login");
 
 module.exports = function( name, pwd, cb ){
-    login.loginWeixin( name, cb, function(loginRes, cookie){
+    login.loginWeixin( name, pwd, function(loginRes, cookie){
         if( loginRes.base_resp.ret == 0 ) {
             var redirect_url = loginRes.redirect_url,
                 rex = /token=(\d+)/;
