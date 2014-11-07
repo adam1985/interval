@@ -7,7 +7,7 @@ var rootPath = process.cwd(),
     querystring = require("querystring"),
     fs = require('fs'),
     userConf = require('../config/userConf'),
-    taskListPath = rootPath + '/loger/tasklist.txt',
+    taskListPath = rootPath + '/public/loger/tasklist.txt',
     tools = require('../module/tools'),
     getList = require('./getList');
 

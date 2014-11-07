@@ -1,7 +1,7 @@
 var fs = require('fs'),
     rootPath = process.cwd(),
     tools = require('../module/tools'),
-    taskListPath = rootPath + '/loger/tasklist.txt';
+    taskListPath = rootPath + '/public/loger/tasklist.txt';
 
 module.exports = function(req, res){
     var taskIndex = req.query.taskindex,

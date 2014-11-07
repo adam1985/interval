@@ -13,6 +13,7 @@ var express = require('express')
   , viewInterval = require('./routes/viewInterval');
 
 global.taskObj = {};
+global.dailyObj = {};
 
 var app = express();
 

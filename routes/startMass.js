@@ -32,7 +32,6 @@ var sendMass = function(operation_seq, token, app_id, cookie, cb){
     paramStr = querystring.stringify( query),
     contentLength = querystring.stringify( options).length;
 
-    console.log('start mass');
     ng.post('https://mp.weixin.qq.com/cgi-bin/masssend?' + paramStr,function(data, status, header){
         cb && cb(JSON.parse(data));
     }, {
@@ -65,32 +64,39 @@ var sendMass = function(operation_seq, token, app_id, cookie, cb){
 };
 
 module.exports = function( config ){
-    var curUser = userConf[config.platform_name];
-    getSeq(curUser.user, curUser.pwd, function(operation_seq, token, loginRes, cookie){
-        var app_id = config.app_id;
-        if( !app_id ) {
-            getMassList(config.platform_name, token, cookie, function(fsend_lists){
-                if( fsend_lists.length ) {
-                    fsend_lists = fsend_lists.reverse();
-                    app_id = fsend_lists[0].app_id;
-                    var title;
+    var curUser = userConf[config.platform_name],
+        prevDay = dailyObj[config.platform_name],
+        curDay = new Date().getDate();
+    if( prevDay != curDay ) {
+        dailyObj[config.platform_name] = curDay;
+        console.log(config.platform_name + ' mass start');
+        getSeq(curUser.user, curUser.pwd, function(operation_seq, token, loginRes, cookie){
+            var app_id = config.app_id;
+            if( !app_id ) {
+                getMassList(config.platform_name, token, cookie, function(fsend_lists){
+                    if( fsend_lists.length ) {
+                        fsend_lists = fsend_lists.reverse();
+                        app_id = fsend_lists[0].app_id;
+                        var title;
 
-                    if( !config.title ) {
-                        title = fsend_lists[0].title;
+                        if( !config.title ) {
+                            title = fsend_lists[0].title;
+                        }
+
+                        sendMass(operation_seq, token, app_id, cookie, function(data){
+                            console.log(config.platform_name + ' mass complete', data);
+                            config.cb(data, config.taskIndex, app_id, config.platform_name, title || null);
+                        });
                     }
-
-                    sendMass(operation_seq, token, app_id, cookie, function(data){
-                        config.cb(data, config.taskIndex, app_id, config.platform_name, title || null);
-                    });
-                }
-            });
-        } else {
-            sendMass(operation_seq, token, app_id, cookie, function(data){
-                config.cb(data, config.taskIndex, app_id, config.platform_name, config.title);
-            });
-        }
-
-    });
+                });
+            } else {
+                sendMass(operation_seq, token, app_id, cookie, function(data){
+                    console.log(config.platform_name + ' mass complete', data);
+                    config.cb(data, config.taskIndex, app_id, config.platform_name, config.title);
+                });
+            }
+        });
+    }
 };
 
 

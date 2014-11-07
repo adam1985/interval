@@ -54,8 +54,8 @@ var rootPath = process.cwd(),
         return timeout;
     },
 
-    taskListPath = rootPath + '/loger/tasklist.txt',
-    publistPath = rootPath + '/loger/publist.txt';
+    taskListPath = rootPath + '/public/loger/tasklist.txt',
+    publistPath = rootPath + '/public/loger/publist.txt';
 
 module.exports = function(req, res){
     var query = req.query,
@@ -68,71 +68,68 @@ module.exports = function(req, res){
         timeParams,
         milli = new Date().getTime();
 
+    var writeLoger = function(data, taskIndex, app_id, platform_name, title){
+        var publist = {};
+        if( fs.existsSync(publistPath) ) {
+            publist = JSON.parse(fs.readFileSync(publistPath).toString());
+        }
+        var noFount  = true, status = 0;
+
+        if( data.ret == 0) {
+            status = 1;
+        } else {
+            status = -1;
+        }
+
+        if( publist[platform_name] ) {
+            tools.each(publist[platform_name], function(i, v){
+                if(v.app_id == app_id){
+                    noFount = false;
+                    publist[platform_name][i].status = status;
+                    return false;
+                }
+            });
+
+            if( noFount ){
+                publist[platform_name].push({
+                    "app_id": app_id,
+                    "status": status,
+                    "title": title
+                });
+            }
+            fs.writeFileSync(publistPath, JSON.stringify(publist));
+        }
+
+        var taskList = [];
+        if( fs.existsSync(taskListPath) ) {
+            taskList = JSON.parse(fs.readFileSync(taskListPath).toString());
+        }
+
+        if( taskList.length ){
+            tools.each(taskList, function(i, v){
+
+                if(v.taskIndex == taskIndex){
+                    taskList[i].prevTime = new Date().format("yyyy-MM-dd hh:mm:ss");
+                    taskList[i].successStatus = status;
+                    if( taskList[i].excuteNum != undefined ) {
+                        taskList[i].excuteNum++;
+                    } else {
+                        taskList[i].excuteNum = 1;
+                    }
+
+                }
+            });
+
+            fs.writeFileSync(taskListPath, JSON.stringify(taskList));
+        }
+    };
+
     if( mode == 0) {
         var rule = new schedule.RecurrenceRule();
         timeParams = time.replace(/\s+/, '').split(/:/);
         rule.hour = +timeParams[0];
         rule.minute = +timeParams[1];
         rule.second = +timeParams[2];
-
-        var writeLoger = function(data, taskIndex, app_id, platform_name, title){
-            console.log(data);
-            var publist = {};
-            if( fs.existsSync(publistPath) ) {
-                publist = JSON.parse(fs.readFileSync(publistPath).toString());
-            }
-            var noFount  = true, status = 0;
-
-            if( data.ret == 0) {
-                status = 1;
-            } else {
-                status = -1;
-            }
-
-            if( publist[platform_name] ) {
-                tools.each(publist[platform_name], function(i, v){
-                    if(v.app_id == app_id){
-                        noFount = false;
-                        publist[platform_name][i].status = status;
-                        return false;
-                    }
-                });
-
-                if( noFount ){
-                    publist[platform_name].push({
-                        "app_id": app_id,
-                        "status": status,
-                        "title": title
-                    });
-                }
-
-                fs.writeFileSync(publistPath, JSON.stringify(publist));
-            }
-
-
-            var taskList = [];
-            if( fs.existsSync(taskListPath) ) {
-                taskList = JSON.parse(fs.readFileSync(taskListPath).toString());
-            }
-
-            if( taskList.length ){
-                tools.each(taskList, function(i, v){
-
-                    if(v.taskIndex == taskIndex){
-                        taskList[i].prevTime = new Date().format("yyyy-MM-dd hh:mm:ss");
-                        taskList[i].successStatus = status;
-                        if( taskList[i].excuteNum != undefined ) {
-                            taskList[i].excuteNum++;
-                        } else {
-                            taskList[i].excuteNum = 1;
-                        }
-
-                    }
-                });
-
-                fs.writeFileSync(taskListPath, JSON.stringify(taskList));
-            }
-        };
 
         task = schedule.scheduleJob(rule, function(){
             startMass({
@@ -147,7 +144,13 @@ module.exports = function(req, res){
 
     } else if( mode == 1){
         timeParams = time.split(/\D/);
-        var date =  new Date(Date.apply(null, timeParams));
+        var date =  new Date(
+            +timeParams[0],
+            +timeParams[1] - 1,
+            +timeParams[2],
+            +timeParams[3],
+            +timeParams[4],
+            +timeParams[5]);
 
         task = schedule.scheduleJob(date, function(){
             startMass({

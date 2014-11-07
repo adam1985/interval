@@ -4,7 +4,7 @@ var rootPath = process.cwd(),
     ng = require('nodegrass'),
     fs = require('fs'),
     querystring = require("querystring"),
-    publistPath = rootPath + '/loger/publist.txt';
+    publistPath = rootPath + '/public/loger/publist.txt';
 
 module.exports = function(platform_name, token, cookie, cb){
     var fsend_lists = [],
