@@ -21,7 +21,7 @@ module.exports = function( name, pwd, cb ){
 
                 /operation_seq:"(\d+)"/m.test(data);
 
-                operation_seq = RegExp.$1.length;
+                operation_seq = RegExp.$1;
 
                 cb && cb(operation_seq, token, loginRes, cookie);
 

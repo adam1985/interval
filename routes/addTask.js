@@ -4,58 +4,8 @@ var fs = require('fs'),
     startMass = require("./startMass");
 
 var rootPath = process.cwd(),
-    setInterTime = function(intervalTime, mode, cb){
-        var args = arguments,
-            now = new Date(),
-            inter,
-            timeParams,
-            nowMilli,
-            interMilli,
-            _timeout,
-            timeout;
-        if( mode == 0 ) {
-            inter = new Date();
-            var dayMilli = 24 * 60 * 60 * 1000;
-                _timeout = dayMilli;
-            if( intervalTime ) {
-                timeParams = intervalTime.replace(/\s+/, '').split(/:/);
-                inter.setHours(+timeParams[0]);
-                inter.setMinutes(+timeParams[1]);
-                inter.setSeconds(+timeParams[2]);
 
-                    nowMilli = now.getTime();
-                    interMilli = inter.getTime();
-                    _timeout = interMilli - nowMilli;
-                if( _timeout < 0 ) {
-                    _timeout = dayMilli + _timeout;
-                }
-            }
-
-            timeout = setTimeout(function(){
-                cb && cb( timeout );
-                args.callee(null, mode, cb);
-            }, _timeout);
-
-        } else if( mode == 1 ){
-            timeParams = intervalTime.split(/\D/);
-            inter = new Date(Date.apply(null, timeParams));
-
-            nowMilli = now.getTime();
-            interMilli = inter.getTime();
-            _timeout = interMilli - nowMilli;
-
-            if( _timeout ) {
-                timeout = setTimeout(function(){
-                    cb && cb( timeout );
-                }, _timeout);
-            }
-        }
-
-        return timeout;
-    },
-
-    taskListPath = rootPath + '/public/loger/tasklist.txt',
-    publistPath = rootPath + '/public/loger/publist.txt';
+    taskListPath = rootPath + '/public/loger/tasklist.txt';
 
 module.exports = function(req, res){
     var query = req.query,
@@ -64,15 +14,13 @@ module.exports = function(req, res){
         time = query.time,
         app_id = query.app_id,
         title = query.title,
+        callback = req.query.cb,
         task,
         timeParams,
         milli = new Date().getTime();
 
     var writeLoger = function(data, taskIndex, app_id, platform_name, title){
-        var publist = {};
-        if( fs.existsSync(publistPath) ) {
-            publist = JSON.parse(fs.readFileSync(publistPath).toString());
-        }
+
         var noFount  = true, status = 0;
 
         if( data.ret == 0) {
@@ -81,24 +29,7 @@ module.exports = function(req, res){
             status = -1;
         }
 
-        if( publist[platform_name] ) {
-            tools.each(publist[platform_name], function(i, v){
-                if(v.app_id == app_id){
-                    noFount = false;
-                    publist[platform_name][i].status = status;
-                    return false;
-                }
-            });
-
-            if( noFount ){
-                publist[platform_name].push({
-                    "app_id": app_id,
-                    "status": status,
-                    "title": title
-                });
-            }
-            fs.writeFileSync(publistPath, JSON.stringify(publist));
-        }
+ 
 
         var taskList = [];
         if( fs.existsSync(taskListPath) ) {
@@ -187,10 +118,9 @@ module.exports = function(req, res){
 
     fs.writeFileSync(taskListPath, JSON.stringify(taskList));
 
-    res.set({'Content-Type':'text/plain'});
-    res.send(JSON.stringify({
+    tools.interfaceDone(res, {
         success : true,
         data : [taskData]
-    }));
+    }, callback);
 
 };

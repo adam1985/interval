@@ -3,7 +3,7 @@ var crypto = require('crypto'),
     querystring = require("querystring");
 
 exports.loginWeixin = function( name, pwd, cb ) {
-    hasher=crypto.createHash("md5");
+    var hasher=crypto.createHash("md5");
     hasher.update(pwd);
     pwd = hasher.digest('hex');
 

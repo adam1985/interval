@@ -68,7 +68,6 @@ module.exports = function( config ){
         prevDay = dailyObj[config.platform_name],
         curDay = new Date().getDate();
     if( prevDay != curDay ) {
-        dailyObj[config.platform_name] = curDay;
         console.log(config.platform_name + ' mass start');
         getSeq(curUser.user, curUser.pwd, function(operation_seq, token, loginRes, cookie){
             var app_id = config.app_id;
@@ -85,6 +84,7 @@ module.exports = function( config ){
 
                         sendMass(operation_seq, token, app_id, cookie, function(data){
                             console.log(config.platform_name + ' mass complete', data);
+                            dailyObj[config.platform_name] = curDay;
                             config.cb(data, config.taskIndex, app_id, config.platform_name, title || null);
                         });
                     }
@@ -92,6 +92,7 @@ module.exports = function( config ){
             } else {
                 sendMass(operation_seq, token, app_id, cookie, function(data){
                     console.log(config.platform_name + ' mass complete', data);
+                    dailyObj[config.platform_name] = curDay;
                     config.cb(data, config.taskIndex, app_id, config.platform_name, config.title);
                 });
             }

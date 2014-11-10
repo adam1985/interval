@@ -5,6 +5,7 @@ var fs = require('fs'),
 
 module.exports = function(req, res){
     var taskIndex = req.query.taskindex,
+        callback = req.query.cb,
         targetTask = taskObj[taskIndex];
 
     try{
@@ -29,9 +30,8 @@ module.exports = function(req, res){
 
     fs.writeFileSync(taskListPath, JSON.stringify(taskListArr));
 
-    res.set({'Content-Type':'text/plain'});
-    res.send(JSON.stringify({
+    tools.interfaceDone(res, {
         success : true
-    }));
+    }, callback);
 
 };

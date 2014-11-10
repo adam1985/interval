@@ -130,5 +130,17 @@ tools_.extend = function (arg, dft, cover) {
     return arg;
 };
 
+tools_.interfaceDone = function( res, data, callback ){
+        var resp = JSON.stringify( data );
+        
+        if( callback ) {
+            resp = callback + '(' + resp  + ')';
+        }
+        
+        res.set({'Content-Type':'text/plain'});
+
+        res.send(resp);
+};
+
 module.exports = tools_;
 
